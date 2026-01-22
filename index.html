@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LORD SORGU API</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+<style>
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{
+margin:0;
+min-height:100vh;
+background:linear-gradient(-45deg,#020617,#020b2d,#020617,#050b30);
+background-size:400% 400%;
+animation:bg 10s infinite alternate;
+color:#fff
+}
+@keyframes bg{
+0%{background-position:0% 50%}
+100%{background-position:100% 50%}
+}
+
+h1{
+text-align:center;
+margin:20px 0;
+color:#00d0ff;
+font-size:32px;
+text-shadow:0 0 12px #00d0ff
+}
+
+.telegram-box{
+display:flex;
+justify-content:center;
+gap:10px;
+margin-bottom:20px
+}
+.tg-btn{
+background:#229ED9;
+padding:10px 16px;
+border-radius:12px;
+color:#fff;
+text-decoration:none;
+font-weight:bold;
+font-size:14px
+}
+
+.container{
+max-width:460px;
+margin:auto;
+padding-bottom:120px
+}
+
+.card{
+background:#0b122a;
+border-radius:16px;
+padding:14px;
+margin:10px;
+box-shadow:0 0 20px #000
+}
+.title{
+font-weight:bold;
+font-size:15px
+}
+.url{
+font-size:11px;
+color:#aaa;
+word-break:break-all;
+margin:6px 0
+}
+
+.btn{
+width:100%;
+border:none;
+border-radius:10px;
+padding:8px;
+font-size:13px;
+margin-top:6px;
+cursor:pointer
+}
+.open{background:#2ecc71;color:#000;font-weight:bold}
+.copy{background:#3498db;color:#fff}
+
+.admin-btn{
+position:fixed;
+bottom:20px;
+right:20px;
+width:58px;
+height:58px;
+border-radius:50%;
+background:#f1c40f;
+color:#000;
+font-size:24px;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+z-index:10
+}
+
+.modal{
+position:fixed;
+inset:0;
+background:#000c;
+display:none;
+align-items:center;
+justify-content:center;
+z-index:20
+}
+.modal-box{
+background:#050b20;
+padding:20px;
+border-radius:16px;
+width:90%;
+max-width:380px
+}
+input{
+width:100%;
+padding:10px;
+border-radius:10px;
+border:none;
+margin:6px 0
+}
+.small{
+font-size:12px;
+color:#aaa;
+margin-top:10px
+}
+</style>
+</head>
+
+<body>
+
+<h1>LORD SORGU API</h1>
+
+<div class="telegram-box">
+<a class="tg-btn" href="https://t.me/lordsystemv3" target="_blank">
+<i class="fab fa-telegram"></i> Kanal
+</a>
+<a class="tg-btn" href="https://t.me/LordDestekHat" target="_blank">
+<i class="fab fa-telegram"></i> Admin
+</a>
+</div>
+
+<div class="container" id="apiList"></div>
+
+<div class="admin-btn" onclick="openLogin()">⚙</div>
+
+<!-- LOGIN -->
+<div class="modal" id="loginModal">
+<div class="modal-box">
+<h3>Admin Giriş</h3>
+<input type="password" id="adminPass" placeholder="Admin şifre">
+<button class="btn open" onclick="login()">Giriş</button>
+</div>
+</div>
+
+<!-- PANEL -->
+<div class="modal" id="panelModal">
+<div class="modal-box">
+<h3>Admin Panel</h3>
+
+<input id="apiName" placeholder="API Adı">
+<input id="apiUrl" placeholder="API URL">
+<button class="btn open" onclick="addApi()">API EKLE</button>
+
+<div id="adminList"></div>
+
+<button class="btn copy" onclick="logout()">Kapat</button>
+</div>
+</div>
+
+<script>
+const defaultApis=[
+{name:"lordtrknetveri",url:"https://lordapiv3.onrender.com/search/lordtrknetveri_result?q=",active:true},
+{name:"calintitckimliksorgu",url:"https://lordapiv3.onrender.com/search/calintitckimliksorgu_result?q=",active:true},
+{name:"25meokul",url:"https://lordapiv3.onrender.com/search/25meokul_result?q=",active:true},
+{name:"adsoyad20k",url:"https://lordapiv3.onrender.com/search/adsoyad20k_result?q=",active:true},
+{name:"gsmtc2015",url:"https://lordapiv3.onrender.com/search/gsmtc2015_result?q=",active:true},
+{name:"lordsemensorgu",url:"https://lordapiv3.onrender.com/search/lordsemensorgu_result?q=",active:true},
+{name:"turkiyemedenidurumsorgu",url:"https://lordapiv3.onrender.com/search/turkiyemedenidurumsorgu_result?q=",active:true},
+{name:"adsoyadv",url:"https://lordapiv3.onrender.com/search/adsoyadv_result?q=",active:true},
+{name:"hastenedoctor",url:"https://lordapiv3.onrender.com/search/hastenedoctor_result?q=",active:true},
+{name:"50ktcsorgu",url:"https://lordapiv3.onrender.com/search/50ktcsorgu_result?q=",active:true},
+{name:"isyeripro",url:"https://lordapiv3.onrender.com/search/isyeripro_result?q=",active:true}
+];
+
+let apis=JSON.parse(localStorage.getItem("apis"))||defaultApis;
+localStorage.setItem("apis",JSON.stringify(apis));
+
+function render(){
+apiList.innerHTML="";
+apis.filter(a=>a.active).forEach(a=>{
+apiList.innerHTML+=`
+<div class="card">
+<div class="title">✅ ${a.name}</div>
+<div class="url">${a.url}</div>
+<button class="btn open" onclick="window.open('${a.url}','_blank')">API Aç</button>
+<button class="btn copy" onclick="copyText('${a.url}',this)">Kopyala</button>
+</div>`;
+});
+}
+
+function copyText(t,b){
+navigator.clipboard.writeText(t);
+b.innerText="Kopyalandı";
+setTimeout(()=>b.innerText="Kopyala",1200);
+}
+
+function openLogin(){loginModal.style.display="flex"}
+
+async function login(){
+const pass=adminPass.value;
+const r=await fetch("/admin-login",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({password:pass})
+});
+if(r.ok){
+loginModal.style.display="none";
+panelModal.style.display="flex";
+renderAdmin();
+}else alert("Hatalı şifre");
+}
+
+function logout(){panelModal.style.display="none"}
+
+function renderAdmin(){
+adminList.innerHTML="";
+apis.forEach((a,i)=>{
+adminList.innerHTML+=`
+<div class="small">${a.name}</div>
+<button class="btn copy" onclick="toggleApi(${i})">Aç / Kapat</button>
+<button class="btn open" onclick="deleteApi(${i})">Sil</button>
+`;
+});
+}
+
+function toggleApi(i){apis[i].active=!apis[i].active;save()}
+function deleteApi(i){if(confirm("Silinsin mi?")){apis.splice(i,1);save()}}
+function save(){localStorage.setItem("apis",JSON.stringify(apis));render();renderAdmin()}
+
+function addApi(){
+if(!apiName.value||!apiUrl.value) return alert("Boş bırakma");
+apis.push({name:apiName.value,url:apiUrl.value,active:true});
+apiName.value="";apiUrl.value="";
+save();
+}
+
+render();
+</script>
+
+</body>
+</html>
